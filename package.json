@@ -1,0 +1,16 @@
+{
+  "name": "multipage_data_scraper",
+  "version": "1.0.0",
+  "description": "Tool to mass scrape data --> Convert to JSON for another project",
+  "main": "1_clean_modify.js",
+  "dependencies": {},
+  "devDependencies": {
+    "jsdom": "^15.2.1",
+    "node-fetch": "^2.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

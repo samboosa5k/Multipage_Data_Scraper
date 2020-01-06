@@ -34,10 +34,10 @@ const parseHTML = async (incoming, letter) => {
     const all_airports = doc.window.document.querySelectorAll('tr td:nth-child(3)');
     const all_locations = doc.window.document.querySelectorAll('tr td:nth-child(4)');
     //  Setup storage
-    const rawJSON = {[letter]: []};
+    const rawJSON = [];
     //  Build usable JSON, baby!
     for(let i = 0; i<all_IATA.length; i++){
-        rawJSON[letter].push(
+        rawJSON.push(
             {
                 "key": all_IATA[i].textContent,
                 "airport": all_airports[i].textContent,

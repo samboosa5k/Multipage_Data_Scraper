@@ -18,9 +18,14 @@ const { JSDOM } = jsdom;
 /* 
     Constants: these will never change
 */
-const alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+const alphabet = ['B','M'];
 const url = "https://en.wikipedia.org/wiki/List_of_airports_by_IATA_code:_";
 
+/* 
+    Test Counter: I seem to be missing some airports...
+*/
+let collectCount = 0;
+let adaptCount = 0;
 
 /* 
     Functions:
@@ -35,7 +40,7 @@ const collectHTML = async (letter) => {
     return data;
 }
 
-const parseHTML = async (incoming, letter) => {
+const parseHTML = async (incoming) => {
     //  Prepare data for use
     const data = await incoming;
     const doc = new JSDOM(data);
@@ -55,7 +60,9 @@ const parseHTML = async (incoming, letter) => {
             }
         );
     }
+    collectCount = collectCount+rawJSON.length;
 
+    console.log(rawJSON.length);
     return rawJSON;
 }
 //  collectHTML & parseHTML - LOOP END
@@ -77,47 +84,37 @@ const genJSON = async (incoming) => {
 */
 let storeIATA = [];
 
-const collectIATA = async (alphabet) => {
+const collectIATA = async (alphabet, storage) => {
     for(let i = 0; i<alphabet.length; i++){
-        console.log('collectIATA status: ', `Collection started of ${alphabet[i]}`);
         //  Collect & parse IATA based on ALphabet-letter
         const html = await collectHTML(alphabet[i]);
-        const json = await parseHTML(html, alphabet[i]);
+        const json = await parseHTML(html);
         
-        //  Expand storeIATA array for use by adaptIATA
+        //  Push to storeIATA array for use by adaptIATA
         storeIATA = [...storeIATA,...json];
-
+        
         //  Create usable IATA Grouped JSON
         const iataGrouped = await genJSON(json);
-
-        // File-writing: IATA-grouped 
-        fs.appendFile(`db_IATA/${alphabet[i]}_airports.json`, iataGrouped, (err)=>{
-            if (err) throw err;
-            console.log('File saved = ', `db_IATA/${alphabet[i]}_airports.json`);
-        })
+        
     }
-    console.log('collectIATA -> storage length is :', storeIATA.length);
 }
 
-const adaptIATA = async (alphabet, storage) => {
-    
-    console.log('adaptIATA status: ', 'IATA collection reached end, now split into location groups...');
-    
+const adaptIATA = async (alphabet, storage) => {  
+    const json = storeIATA;
     for(let i = 0; i<alphabet.length; i++){
-        const jsonFiltered = storage.filter((obj)=>{
-            return obj.location.startsWith(alphabet[i]) === true;
-        });
+        // Combined airport list
 
         //  Filter combined list and group alphabetically by location name
-        const locationGrouped = await genJSON(jsonFiltered);
-
-        // File-writing: Location-grouped
-        fs.appendFile(`db_LOCATION/${alphabet[i]}_airports.json`, locationGrouped, (err)=>{
-            if (err) throw err;
-            console.log('File saved = ', `db_LOCATION/${alphabet[i]}_airports.json`);
-        })
+        const locationGrouped = await genJSON(json.filter((obj)=>{
+            if(obj.location.includes('Manama')) {
+                console.log(`Manama SPLIT location starts with ${alphabet[i]}? `, obj.location.split('')[0].startsWith(alphabet[i]));
+                console.log(`Manama SPLIT location 0-index = ${alphabet[i]}? `, obj.location.split('')[0]===alphabet[i]);
+                return obj;
+            }
+        }));
+        
+        //console.log(`LOCATION group ${alphabet[i]}: `, locationGrouped);
     }
-    
 }
 
 
@@ -125,10 +122,15 @@ const adaptIATA = async (alphabet, storage) => {
     INIT
     - First collect all IATA codes, then sort them into separate files
     - Total of 9012 IATA codes
+    
+    Bug:
+    - Strangely, after writing out the files, the ones grouped by alphabetical location are about 50% the size
+    - This IS partly because some foreign characters of location names are not being matched
+    - UPDATE: fs.appendFile was adding new json to some files I accidentally left behind
 */
 const startProcess = async () => {
-    collectIATA(alphabet)
-        .then(() => { adaptIATA(alphabet, storeIATA) });
+    collectIATA(alphabet, storeIATA)
+        .then(() => { adaptIATA(alphabet, storeIATA) })
 }
 
 startProcess();

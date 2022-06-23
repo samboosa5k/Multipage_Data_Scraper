@@ -5,7 +5,7 @@
   "main": "1_clean_modify.js",
   "dependencies": {},
   "devDependencies": {
-    "jsdom": "^15.2.1",
+    "jsdom": "^16.5.0",
     "node-fetch": "^2.6.0"
   },
   "scripts": {
